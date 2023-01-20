@@ -1,0 +1,160 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace vtysProject
+{
+    public partial class stokDurumu : Form
+    {
+       
+        public stokDurumu()
+        {
+            InitializeComponent();
+        }
+        SqlConnection baglanti = new SqlConnection("Data Source=DESKTOP-M9SLCJM; Initial Catalog = dbmarket; Integrated Security =True");
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            textBox2.Text = dataGridView1.CurrentRow.Cells[0].Value.ToString(); 
+            textBox3.Text = dataGridView1.CurrentRow.Cells[1].Value.ToString(); 
+            textBox4.Text = dataGridView1.CurrentRow.Cells[2].Value.ToString(); 
+            textBox5.Text = dataGridView1.CurrentRow.Cells[3].Value.ToString(); 
+            textBox6.Text = dataGridView1.CurrentRow.Cells[4].Value.ToString(); 
+            textBox1.Text = dataGridView1.CurrentRow.Cells[5].Value.ToString();
+            textBox7.Text = dataGridView1.CurrentRow.Cells[6].Value.ToString();
+            textBox8.Text = dataGridView1.CurrentRow.Cells[7].Value.ToString();
+        }
+        private void stokDurumu_Load_1(object sender, EventArgs e)
+        {
+            listele();
+        }
+     
+        private void listele()
+        {
+            baglanti.Open();
+            SqlDataAdapter da = new SqlDataAdapter("Select *from stok", baglanti);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            dataGridView1.DataSource = dt;
+            baglanti.Close();
+        }
+
+
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            AnaSayfa back = new AnaSayfa();
+            back.Show();
+            Hide();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {//ekle
+            String st1 = textBox1.Text; // tedarikci
+            String st2 = textBox2.Text; //ürünKodu
+            String st3 = textBox3.Text; //irsaliyeNo
+            String st4 = textBox4.Text; //birimfiyat
+            String st5 = textBox5.Text; //miktar
+            String st6 = textBox6.Text; //barkod
+            String st7 = textBox7.Text; // tarih
+            String st8 = textBox8.Text; // urunIsmi
+
+
+            if (st1 == "" || st2 == "" || st3 == "" || st4 == "" || st5 == "" || st6 == "" || st7 == "" || st8 == "")
+            {
+                MessageBox.Show("Lütfen Boş Bıraktığınız Yerleri Tekrardan Giriş Yapınız!!!");
+            } else
+            {
+                try
+                {
+                    baglanti.Open();
+                    SqlCommand komut = new SqlCommand("INSERT INTO stok (tedarikci, urunKodu, irsaliyeNo, girdiBirimFiyatı, miktar, urunBarkod, tarih, urunIsmi) VALUES('" + st1 + "','" + st2 + "','" + st3 + "','" + st4 + "','" + st5 + "','" + st6 + "',  '" + st7 + "',  '" + st8 + "')", baglanti);
+                    komut.ExecuteNonQuery();
+                } 
+                catch
+                {
+                    MessageBox.Show("Aynı Barkod Nolu Ürün Ekleyemezsiniz!!!");
+                }
+
+
+                
+
+                SqlCommand komut2 = new SqlCommand();
+                komut2.Connection = baglanti;
+                komut2.CommandText = "SELECT COUNT(1) FROM marketBorc WHERE tedarikciIsmi = '" + st1 + "'";
+                object chc = komut2.ExecuteScalar();
+                if (chc.ToString() == string.Empty) chc = "0";
+                int chcc = int.Parse(chc.ToString());
+
+                if (chcc == 0)
+                {
+                    float eborc = float.Parse(st4.ToString().Replace(".", ",")) * float.Parse(st5.ToString().Replace(".", ","));
+
+                    SqlCommand komut9 = new SqlCommand("INSERT INTO marketBorc (tedarikciIsmi, toplamBorc) VALUES('" + st1 + "','" + eborc.ToString().Replace(",", ".") + "')", baglanti);
+                    komut9.ExecuteNonQuery();
+                }
+                else
+                {
+                    SqlCommand komut7 = new SqlCommand();
+                    komut7.Connection = baglanti;
+                    komut7.CommandText = "Select Min(toplamBorc) from marketBorc where tedarikciIsmi = '" + st1 + "'";
+                    object ebor = komut7.ExecuteScalar();
+                    if (ebor.ToString() == string.Empty) ebor = "0";
+                    float eborc = float.Parse(ebor.ToString()) + float.Parse(st4.ToString().Replace(".", ",")) * float.Parse(st5.ToString().Replace(".", ","));
+                    
+                    SqlCommand komut8 = new SqlCommand("UPDATE marketBorc SET toplamBorc = '" + eborc.ToString().Replace(",", ".") + "' WHERE tedarikciIsmi = '" + st1 + "' ", baglanti);
+                    komut8.ExecuteNonQuery();
+                }
+
+
+                    
+
+
+                baglanti.Close();
+                listele();
+            }
+            
+
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        { //sil
+            String st6 = textBox6.Text; // barkod
+            baglanti.Open();
+            SqlCommand komut = new SqlCommand("DELETE FROM stok WHERE urunBarkod =  ('" + st6 + "')", baglanti);
+            komut.ExecuteNonQuery();
+            baglanti.Close();
+            listele();
+           
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        { // Güncelle
+            String st1 = textBox1.Text; // tedarikci
+            String st2 = textBox2.Text; //ürünKodu
+            String st3 = textBox3.Text; //irsaliyeNo
+            String st4 = textBox4.Text; //birimfiyat
+            String st5 = textBox5.Text; //miktar
+            String st6 = textBox6.Text; //barkod
+            String st7 = textBox7.Text; // tarih
+            String st8 = textBox8.Text; // urunIsmi
+            baglanti.Open();
+            SqlCommand komut = new SqlCommand("UPDATE stok SET tedarikci = '"+ st1 + "' ,urunKodu = '" + st2 + "', irsaliyeNo = '" + st3 + "', girdiBirimFiyatı = '" + st4 + "', miktar = '" + st5 + "', tarih = '" + st7 + "', urunIsmi = '" + st8 + "' WHERE urunBarkod = '" + st6 +"' ", baglanti);
+            komut.ExecuteNonQuery();
+            baglanti.Close();
+            listele();
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+    }
+}

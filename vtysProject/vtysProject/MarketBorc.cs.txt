@@ -1,0 +1,83 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace vtysProject
+{
+    public partial class MarketBorc : Form
+    {
+        public MarketBorc()
+        {
+            InitializeComponent();
+        }
+        SqlConnection baglanti = new SqlConnection("Data Source=DESKTOP-M9SLCJM; Initial Catalog = dbmarket; Integrated Security =True");
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            AnaSayfa ana =new AnaSayfa();
+            ana.Show();
+            Hide();
+        }
+
+        private void MarketBorc_Load(object sender, EventArgs e)
+        {
+            listele();
+        }
+        private void listele()
+        {
+            baglanti.Open();
+            SqlDataAdapter da = new SqlDataAdapter("Select *from marketBorc", baglanti);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            dataGridView1.DataSource = dt;
+            baglanti.Close();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            baglanti.Open();
+
+            String st1 = textBox2.Text; //tedarikçi
+            String st2 = textBox3.Text; //tutar
+
+            SqlCommand komut = new SqlCommand();
+            komut.Connection = baglanti;
+            komut.CommandText = "SELECT COUNT(1) FROM marketBorc WHERE tedarikciIsmi = '" + st1 + "'";
+            object chc = komut.ExecuteScalar();
+            if (chc.ToString() == string.Empty) chc = "0";
+            int chcc = int.Parse(chc.ToString());
+
+            if (chcc != 0)
+            {
+                SqlCommand komut2 = new SqlCommand();
+                komut2.Connection = baglanti;
+                komut2.CommandText = "Select Min(toplamBorc) from marketBorc where tedarikciIsmi = '" + st1 + "'";
+                object ebor = komut2.ExecuteScalar();
+                if (ebor.ToString() == string.Empty) ebor = "0";
+                float eborc = float.Parse(ebor.ToString()) - float.Parse(st2.ToString().Replace(".", ","));
+
+                SqlCommand komut3 = new SqlCommand("UPDATE marketBorc SET toplamBorc = '" + eborc.ToString().Replace(",", ".") + "' WHERE tedarikciIsmi = '" + st1 + "' ", baglanti);
+                komut3.ExecuteNonQuery();
+            }
+            else
+            {
+                MessageBox.Show("BÖYLE BİR TEDARİKÇİ YOKTUR!!!");
+            }
+
+            baglanti.Close();
+            listele();
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
