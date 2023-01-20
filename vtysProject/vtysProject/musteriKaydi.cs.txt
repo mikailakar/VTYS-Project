@@ -1,0 +1,83 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace vtysProject
+{
+    public partial class musteriKaydi : Form
+    {
+        public musteriKaydi()
+        {
+            InitializeComponent();
+        }
+        SqlConnection baglanti = new SqlConnection("Data Source=DESKTOP-M9SLCJM; Initial Catalog = dbmarket; Integrated Security =True");
+        private void button1_Click(object sender, EventArgs e)
+        { //musteriEkle
+            String st1 = textBox1.Text; // musteriKodu
+            String st2 = textBox2.Text; // musteriIsmi
+            String st3 = textBox3.Text; // musteriSoyisim
+
+
+            if (st1 == "" || st2 == "" || st3 == "")
+            {
+                MessageBox.Show("Lütfen Boş Bıraktığınız Yerleri Tekrardan Giriş Yapınız!!!");
+            }
+            else
+            {
+                baglanti.Open();
+                SqlCommand komut2 = new SqlCommand();
+                komut2.Connection = baglanti;
+                komut2.CommandText = "SELECT COUNT(1) FROM musteri WHERE musteriKodu = '" + st1 + "'";
+                object chc = komut2.ExecuteScalar();
+                if (chc.ToString() == string.Empty) chc = "0";
+                int chcc = int.Parse(chc.ToString());
+
+                if (chcc == 0)
+                {
+                    SqlCommand komut = new SqlCommand("INSERT INTO musteri (musteriKodu, musteriIsmi, musteriSoyisim) VALUES('" + st1 + "','" + st2 + "','" + st3 + "')", baglanti);
+                    komut.ExecuteNonQuery();
+                    baglanti.Close();
+                    listele();
+                }
+                else
+                {
+                    MessageBox.Show("Girilen Müşteri Kodu Mevcuttur!!!");
+                    baglanti.Close();
+                }
+            }
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            listele();
+        }
+        private void listele()
+        {
+            baglanti.Open();
+            SqlDataAdapter da = new SqlDataAdapter("Select *from musteri", baglanti);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            dataGridView1.DataSource = dt;
+            baglanti.Close();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            AnaSayfa back = new AnaSayfa();
+            back.Show();
+            Hide();
+        }
+
+        private void musteriKaydi_Load(object sender, EventArgs e)
+        {
+            listele();
+        }
+    }
+}
